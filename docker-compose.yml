@@ -1,0 +1,55 @@
+services:
+
+  psql_bp:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - psql_volume_bp:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}'"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  backend:
+    image: ваш_логин/spring-backend:1.0.0 # Будет качать образ с Docker Hub
+    # или используйте build: ./backend (если хотите собирать локально на сервере)
+    container_name: spring_backend_app
+    restart: always
+    depends_on:
+      postgres-db:
+        condition: service_healthy # Ждет, пока Postgres полностью запустится и будет готов принимать соединения
+    environment:
+      # Переопределяем параметры подключения Spring Boot к БД через переменные окружения
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/my_database
+      SPRING_DATASOURCE_USERNAME: postgres_user
+      SPRING_DATASOURCE_PASSWORD: my_secure_password
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  # --- СЕРВИС 3: Frontend (Vue + Nginx) ---
+  frontend:
+    image: ваш_логин/vue-frontend:1.0.0 # Будет качать образ с Docker Hub
+    container_name: vue_frontend_app
+    restart: always
+    ports:
+      - "80:80" # Открываем веб-сайт на стандартном 80 порту
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  psql_volume_bp:
+
+networks:
+  app-network:
+    driver: bridge
