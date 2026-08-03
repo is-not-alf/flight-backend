@@ -18,15 +18,13 @@ services:
       start_period: 15s
 
   backend:
-    image: ваш_логин/spring-backend:1.0.0 # Будет качать образ с Docker Hub
-    # или используйте build: ./backend (если хотите собирать локально на сервере)
+    image: isnotalf/spring-backend:1.0.0
     container_name: spring_backend_app
     restart: always
     depends_on:
       postgres-db:
-        condition: service_healthy # Ждет, пока Postgres полностью запустится и будет готов принимать соединения
+        condition: service_healthy
     environment:
-      # Переопределяем параметры подключения Spring Boot к БД через переменные окружения
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/my_database
       SPRING_DATASOURCE_USERNAME: postgres_user
       SPRING_DATASOURCE_PASSWORD: my_secure_password
@@ -35,13 +33,12 @@ services:
     networks:
       - app-network
 
-  # --- СЕРВИС 3: Frontend (Vue + Nginx) ---
   frontend:
-    image: ваш_логин/vue-frontend:1.0.0 # Будет качать образ с Docker Hub
+    image: isnotalf/vue-frontend:1.0.0
     container_name: vue_frontend_app
     restart: always
     ports:
-      - "80:80" # Открываем веб-сайт на стандартном 80 порту
+      - "80:80"
     depends_on:
       - backend
     networks:
